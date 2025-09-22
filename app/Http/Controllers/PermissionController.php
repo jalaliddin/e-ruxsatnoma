@@ -11,7 +11,7 @@ class PermissionController extends Controller
 {
     public function index()
     {
-    $permissions = Permission::with('user')
+    $permissions = Permission::with('user')->where('user_id', auth()->id())
         ->latest('id')
         ->paginate(25); // sahifalash 25 ta yozuv bilan
         return view('index', compact('permissions'));
