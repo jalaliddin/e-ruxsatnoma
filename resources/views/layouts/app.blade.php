@@ -2,7 +2,7 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <title>@yield('title', 'Jaloliddin Saidov')</title>
+    <title>@yield('title', 'Panel')</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Tailwind CSS CDN -->
@@ -61,7 +61,7 @@
             </a>
         </nav>
         <div class="p-4 border-t border-gray-800 text-sm text-center">
-            &copy; {{ date('Y') }} Panel
+            &copy; {{ date('Y') }} AKT bo'limi
         </div>
         @guest
                     <a href="{{ route('login') }}" class="menu-link">🔐 Kirish</a>
