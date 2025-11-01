@@ -17,7 +17,7 @@ services:
 
   web:
     image: nginx:latest
-    container_name: laravel-nginx
+    container_name: ruxsatnoma-nginx
     restart: unless-stopped
     ports:
       - "8081:80"
@@ -31,7 +31,7 @@ services:
 
   db:
     image: mysql:8.0
-    container_name: laravel-db
+    container_name: ruxsatnoma-db
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
