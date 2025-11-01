@@ -4,8 +4,8 @@ services:
   app:
     build:
       context: .
-    image: laravel-app
-    container_name: laravel-app
+    image: ruxsatnoma-app
+    container_name: ruxsatnoma-app
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
