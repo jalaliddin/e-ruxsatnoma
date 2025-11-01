@@ -14,7 +14,10 @@ class PermissionController extends Controller
     $permissions = Permission::with('user')->where('user_id', auth()->id())
         ->latest('id')
         ->paginate(25); // sahifalash 25 ta yozuv bilan
-        return view('index', compact('permissions'));
+
+    $isSpecialUser = auth()->user()->special_user;
+    dd(auth()->user());
+        return view('index', compact('permissions','isSpecialUser'));
     }
 
     public function create()

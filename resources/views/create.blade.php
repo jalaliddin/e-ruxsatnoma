@@ -8,6 +8,15 @@
         @csrf
 
         <div>
+            <label class="block text-gray-700" for="head">Ruxsat beruvchi:</label>
+            <select class="w-full border px-3 py-2 rounded" name="cars" id="head">
+            <option value="id">G'.B Jumaniyazov</option>
+            <option value="id2">S.K Bazarbayev</option>
+            <option value="id3">S.B Xudaybergenov</option>
+            </select>
+        </div>
+
+        <div>
             <label class="block text-gray-700">Kimdan (avto):</label>
             <input type="text" value="{{ Auth::user()->name }}" disabled class="w-full border px-3 py-2 rounded bg-gray-200">
         </div>

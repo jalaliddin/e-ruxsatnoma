@@ -43,7 +43,10 @@
             <input id="password_confirmation" type="password" name="password_confirmation" required
                 class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
         </div>
-
+        <input class="form-check-input mb-6" type="checkbox" name="special_user" id="special_user">
+            <label class="form-check-label" for="special_user">
+                Special User sifatida ro'yxatdan o'tish
+            </label>
         <button type="submit"
             class="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition">
             Ro‘yxatdan o‘tish
