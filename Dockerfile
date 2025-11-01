@@ -18,7 +18,7 @@ COPY . .
 RUN git config --global --add safe.directory /var/www/html
 
 # Composer install
-RUN composer install --no-scripts
+RUN composer install --no-dev --optimize-autoloader
 
 # Ruxsatlar
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
