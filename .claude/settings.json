@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan *)",
+      "Bash(npm -v)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://127.0.0.1:8123/login)",
+      "Bash(curl -s -b /tmp/cookies.txt http://127.0.0.1:8123/home -o /tmp/home.html -w \"%{http_code}\\\\n\")",
+      "Read(//tmp/**)",
+      "Bash(php artisan tinker '--execute= *)",
+      "Bash(time curl -s \"http://127.0.0.1:8123/ruxsatnomalar/webhook?code=8782&device=1\")",
+      "Bash(curl -s -o /tmp/wh.txt -w \"%{http_code}\\\\n\" \"http://127.0.0.1:8123/ruxsatnomalar/webhook?code=8782&device=1\")",
+      "Bash(curl -s -b /tmp/cookies.txt http://127.0.0.1:8123/ruxsatnoma -o /tmp/ruxsatnoma_get.html -w \"%{http_code}\\\\n\")",
+      "Bash(grep -o '<input[^>]*_token[^>]*>' /tmp/ruxsatnoma_get.html)",
+      "Bash(pkill -f \"artisan serve\")",
+      "Bash(kill 53552)"
+    ]
+  }
+}

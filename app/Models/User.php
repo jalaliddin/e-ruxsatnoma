@@ -21,6 +21,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'phone',
+        'telegram_chat_id',
+        'telegram_link_token',
     ];
 
     /**
@@ -45,5 +49,35 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isHr(): bool
+    {
+        return $this->role === 'hr';
+    }
+
+    public function isManager(): bool
+    {
+        return $this->role === 'manager';
+    }
+
+    public function createdEmployees()
+    {
+        return $this->hasMany(Employee::class, 'created_by');
+    }
+
+    public function decidedPermissions()
+    {
+        return $this->hasMany(Permission::class, 'approver_id');
+    }
+
+    public function hrPermissions()
+    {
+        return $this->hasMany(Permission::class, 'hr_id');
     }
 }

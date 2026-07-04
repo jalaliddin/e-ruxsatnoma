@@ -2,27 +2,104 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Permission;
-use Illuminate\Support\Facades\Auth;
+use App\Models\PermissionCategory;
+use App\Models\User;
+use App\Services\TelegramService;
 use GuzzleHttp\Client;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PermissionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-    $permissions = Permission::with('user')->where('user_id', auth()->id())
-        ->latest('id')
-        ->paginate(25); // sahifalash 25 ta yozuv bilan
+        $user = $request->user();
 
-    $isSpecialUser = auth()->user()->special_user;
-    dd(auth()->user());
-        return view('index', compact('permissions','isSpecialUser'));
+        $query = Permission::with(['user', 'employee', 'category', 'approver', 'hr']);
+
+        if ($user->isManager()) {
+            $query->where('approver_id', $user->id);
+        } elseif ($user->isHr()) {
+            $query->whereIn('status', ['pending', 'awaiting_manager'])->orWhere('hr_id', $user->id);
+        } elseif (! $user->isAdmin()) {
+            $query->where('user_id', $user->id);
+        }
+
+        $permissions = $query->latest('id')->paginate(25);
+
+        $managers = $user->isHr() || $user->isAdmin()
+            ? User::where('role', 'manager')->get()
+            : collect();
+
+        return view('index', compact('permissions', 'managers'));
+    }
+
+    public function show(Permission $permission)
+    {
+        $permission->load(['user', 'employee', 'category', 'approver', 'hr']);
+
+        return view('permissions.show', compact('permission'));
+    }
+
+    public function assignManager(Request $request, Permission $permission)
+    {
+        $data = $request->validate([
+            'approver_id' => 'required|exists:users,id',
+        ]);
+
+        $permission->update([
+            'approver_id' => $data['approver_id'],
+            'hr_id' => $request->user()->id,
+            'status' => 'awaiting_manager',
+        ]);
+
+        $manager = User::find($data['approver_id']);
+        if ($manager?->telegram_chat_id) {
+            app(TelegramService::class)->sendManagerDecisionRequest($permission, $manager);
+        }
+
+        return back()->with('success', 'So\'rov rahbarga yuborildi.');
+    }
+
+    public function decide(Request $request, Permission $permission)
+    {
+        $data = $request->validate([
+            'decision' => 'required|in:approve,reject',
+        ]);
+
+        if ($data['decision'] === 'approve') {
+            $permission->update([
+                'code' => $this->generateCode(),
+                'status' => 'approved',
+                'approver_id' => $permission->approver_id ?: $request->user()->id,
+                'decided_at' => now(),
+            ]);
+
+            if ($permission->employee?->telegram_chat_id) {
+                app(TelegramService::class)->sendApprovalToEmployee($permission);
+            }
+        } else {
+            $permission->update([
+                'status' => 'rejected',
+                'approver_id' => $permission->approver_id ?: $request->user()->id,
+                'decided_at' => now(),
+            ]);
+
+            if ($permission->employee?->telegram_chat_id) {
+                app(TelegramService::class)->sendRejectionToEmployee($permission);
+            }
+        }
+
+        return back()->with('success', 'Qaror qabul qilindi.');
     }
 
     public function create()
     {
-        return view('create');
+        $categories = PermissionCategory::where('is_active', true)->get();
+        $managers = User::where('role', 'manager')->get();
+
+        return view('create', compact('categories', 'managers'));
     }
 
     public function store(Request $request)
@@ -34,20 +111,17 @@ class PermissionController extends Controller
             'to_time' => 'required|date|after:from_time',
         ]);
 
-        do {
-            $code = rand(1000, 9999);
-        } while (Permission::where('code', $code)->exists());
-
         $permission = Permission::create([
             'user_id' => Auth::id(),
             'employee_name' => $request->employee_name,
             'destination' => $request->destination,
             'from_time' => $request->from_time,
             'to_time' => $request->to_time,
-            'code' => $code,
+            'code' => $this->generateCode(),
+            'status' => 'approved',
         ]);
 
-        return view('create', ['code' => $code]);
+        return view('create', ['code' => $permission->code]);
     }
 
     public function checkForm()
@@ -61,9 +135,9 @@ class PermissionController extends Controller
             'code' => 'required|digits:4',
         ]);
 
-        $permission = Permission::where('code', $request->code)->first();
+        $permission = Permission::where('code', $request->code)->where('status', 'approved')->first();
 
-        if (!$permission) {
+        if (! $permission) {
             return back()->with('result', '❌ Kod topilmadi.');
         }
 
@@ -77,23 +151,23 @@ class PermissionController extends Controller
 
     public function openDoor($device)
     {
-    $client = new Client([
-        'base_uri' => 'http://10.100.90.5'.$device,
-        'auth' => ['admin', '01x994ma', 'digest'],  // digest auth uchun
-    ]);
+        $client = new Client([
+            'base_uri' => 'http://10.100.90.5'.$device,
+            'auth' => ['admin', '01x994ma', 'digest'],  // digest auth uchun
+        ]);
 
-    $response = $client->request('GET', '/cgi-bin/accessControl.cgi', [
-        'query' => [
-            'action' => 'openDoor',
-            'channel' => 1,
-        ],
-    ]);
+        $response = $client->request('GET', '/cgi-bin/accessControl.cgi', [
+            'query' => [
+                'action' => 'openDoor',
+                'channel' => 1,
+            ],
+        ]);
 
-    $body = $response->getBody()->getContents();
+        $body = $response->getBody()->getContents();
 
-    return response()->json([
-        'response' => $body,
-    ]);
+        return response()->json([
+            'response' => $body,
+        ]);
     }
 
     public function webhook(Request $request)
@@ -102,23 +176,27 @@ class PermissionController extends Controller
             'code' => 'required|digits:4',
         ]);
 
-        // return response()->json($request->code);
+        $permission = Permission::where('code', $request->code)->where('status', 'approved')->first();
 
-        $permission = Permission::where('code', $request->code)->first();
-
-        if (!$permission) {
+        if (! $permission) {
             return response()->json('not found');
-            //return back()->with('result', '❌ Kod topilmadi.');
         }
 
         $now = now();
         if ($now->between($permission->from_time, $permission->to_time)) {
             $this->openDoor($request->device);
             return response()->json('success');
-            // return back()->with('result', '✅ Ruxsat bor. (muddat ichida)');
         } else {
             return response()->json('expired');
-            // return back()->with('result', '❌ Ruxsat yo‘q yoki muddati o‘tgan.');
         }
+    }
+
+    private function generateCode(): string
+    {
+        do {
+            $code = (string) random_int(1000, 9999);
+        } while (Permission::where('code', $code)->exists());
+
+        return $code;
     }
 }

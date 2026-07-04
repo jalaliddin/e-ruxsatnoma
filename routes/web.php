@@ -2,21 +2,41 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\PermissionCategoryController;
+use App\Http\Controllers\TelegramWebhookController;
+use App\Http\Controllers\Admin\UserController;
 
-Auth::routes();
+Auth::routes(['register' => false]);
+
+Route::get('/ruxsatnomalar/webhook', [PermissionController::class, 'webhook'])->name('permission.webhook');
+Route::post('/telegram/webhook', [TelegramWebhookController::class, 'handle'])->name('telegram.webhook');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', function () {
-    return view('welcome');
+        return view('welcome');
     })->name('welcome');
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
     Route::get('/ruxsatnoma', [PermissionController::class, 'create'])->name('permission.create');
     Route::post('/ruxsatnoma', [PermissionController::class, 'store'])->name('permission.store');
     Route::get('/tekshir', [PermissionController::class, 'checkForm'])->name('permission.checkForm');
     Route::post('/tekshir', [PermissionController::class, 'check'])->name('permission.check');
     Route::get('/ruxsatnomalar', [PermissionController::class, 'index'])->name('permission.index');
+    Route::get('/ruxsatnomalar/{permission}', [PermissionController::class, 'show'])->name('permission.show');
+
+    Route::middleware('role:admin,hr')->group(function () {
+        Route::post('/ruxsatnomalar/{permission}/assign', [PermissionController::class, 'assignManager'])->name('permission.assign');
+        Route::resource('xodimlar', EmployeeController::class)->names('employees')->except(['show']);
+    });
+
+    Route::middleware('role:manager,admin')->group(function () {
+        Route::post('/ruxsatnomalar/{permission}/decide', [PermissionController::class, 'decide'])->name('permission.decide');
+    });
+
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('kategoriyalar', PermissionCategoryController::class)->names('categories')->except(['show']);
+        Route::resource('admin/foydalanuvchilar', UserController::class)->names('admin.users')->except(['show']);
+        Route::post('/admin/foydalanuvchilar/{user}/telegram-link', [UserController::class, 'generateTelegramLink'])->name('admin.users.telegram-link');
+    });
 });
-    Route::get('/ruxsatnomalar/webhook', [PermissionController::class, 'webhook'])->name('permission.webhook');
-
-
-

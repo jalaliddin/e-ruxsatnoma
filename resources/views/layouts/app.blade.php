@@ -2,84 +2,101 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <title>@yield('title', 'Panel')</title>
+    <title>@yield('title', 'Panel') | E-Ruxsatnoma</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-                /* Oddiy hover effektlar uchun */
-        a.menu-link {
-            display: block;
-            padding: 8px 0;
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        a.menu-link:hover {
-            color: #3b82f6; /* Tailwind blue-500 */
-        }
-        button.logout-btn {
-            background: none;
-            border: none;
-            color: #f87171; /* Tailwind red-400 */
-            cursor: pointer;
-            font-weight: 500;
-            padding: 8px 0;
-            text-align: left;
-            width: 100%;
-        }
-        button.logout-btn:hover {
-            color: #ef4444; /* Tailwind red-500 */
-        }
-    </style>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-100 font-sans text-gray-800">
 
 <div class="flex min-h-screen">
     <!-- Sidebar -->
-    <div class="w-64 bg-black text-white flex flex-col">
-        <div class="text-2xl font-bold p-6 border-b border-gray-800">
-            🛡️ E-Ruxsatnoma
+    <div class="w-64 shrink-0 bg-gray-900 text-white flex flex-col">
+        <div class="text-xl font-bold p-6 border-b border-gray-800 flex items-center gap-2">
+            <span>🛡️</span> <span>E-Ruxsatnoma</span>
         </div>
-        <nav class="flex-1 px-4 py-6 space-y-2">
-            <a href="{{ route('welcome') }}"
-               class="block px-4 py-2 rounded hover:bg-gray-800 {{ request()->is('welcome') ? 'bg-gray-800' : '' }}">
+        <nav class="flex-1 px-3 py-6 space-y-1 text-sm">
+            <a href="{{ route('home') }}"
+               class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('home') ? 'bg-gray-800 text-white' : 'text-gray-300' }}">
                 🏠 Bosh sahifa
             </a>
-            <a href="{{ route('permission.create') }}"
-               class="block px-4 py-2 rounded hover:bg-gray-800 {{ request()->is('ruxsatnoma') ? 'bg-gray-800' : '' }}">
-                ➕ Ruxsatnoma
-            </a>
             <a href="{{ route('permission.index') }}"
-            class="block px-4 py-2 rounded hover:bg-gray-800 {{ request()->is('ruxsatnomalar') ? 'bg-gray-800' : '' }}">
-                📋 Ruxsatnomalar
+               class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('permission.index') ? 'bg-gray-800 text-white' : 'text-gray-300' }}">
+                📋 Ruxsatnoma so'rovlari
+            </a>
+            <a href="{{ route('permission.create') }}"
+               class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('permission.create') ? 'bg-gray-800 text-white' : 'text-gray-300' }}">
+                ➕ Qo'lda ruxsatnoma
             </a>
             <a href="{{ route('permission.checkForm') }}"
-               class="block px-4 py-2 rounded hover:bg-gray-800 {{ request()->is('tekshir') ? 'bg-gray-800' : '' }}">
-                🔍 Tekshirish
+               class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('permission.checkForm') ? 'bg-gray-800 text-white' : 'text-gray-300' }}">
+                🔍 Kodni tekshirish
             </a>
+
+            @auth
+                @if (auth()->user()->isAdmin() || auth()->user()->isHr())
+                    <div class="pt-4 mt-4 border-t border-gray-800 text-xs uppercase text-gray-500 px-3">Boshqaruv</div>
+                    <a href="{{ route('employees.index') }}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('employees.*') ? 'bg-gray-800 text-white' : 'text-gray-300' }}">
+                        👷 Xodimlar
+                    </a>
+                @endif
+
+                @if (auth()->user()->isAdmin())
+                    <a href="{{ route('categories.index') }}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('categories.*') ? 'bg-gray-800 text-white' : 'text-gray-300' }}">
+                        🗂️ Kategoriyalar
+                    </a>
+                    <a href="{{ route('admin.users.index') }}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('admin.users.*') ? 'bg-gray-800 text-white' : 'text-gray-300' }}">
+                        🧑‍💼 Foydalanuvchilar
+                    </a>
+                @endif
+            @endauth
         </nav>
-        <div class="p-4 border-t border-gray-800 text-sm text-center">
+        <div class="p-4 border-t border-gray-800 text-xs text-center text-gray-400">
             &copy; {{ date('Y') }} AKT bo'limi
         </div>
-        @guest
-                    <a href="{{ route('login') }}" class="menu-link">🔐 Kirish</a>
-                @endguest
+        <div class="p-4 border-t border-gray-800 text-sm">
+            @guest
+                <a href="{{ route('login') }}" class="block text-center py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition">🔐 Kirish</a>
+            @endguest
 
-                @auth
+            @auth
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-gray-300 truncate">{{ auth()->user()->name }}</span>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="logout-btn">🚪 Chiqish</button>
+                        <button type="submit" class="text-red-400 hover:text-red-300 transition">🚪 Chiqish</button>
                     </form>
-                @endauth
-            </nav>
+                </div>
+            @endauth
+        </div>
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1 p-6">
-        <h1 class="text-2xl font-semibold mb-4">@yield('title')</h1>
-        @yield('content')
+    <div class="flex-1 flex flex-col min-w-0">
+        <header class="bg-white border-b px-6 py-4 shadow-sm">
+            <h1 class="text-xl font-semibold text-gray-800">@yield('title')</h1>
+        </header>
+
+        <main class="flex-1 p-6">
+            @if (session('success'))
+                <div class="mb-4 rounded-lg border border-green-300 bg-green-50 text-green-800 px-4 py-3">
+                    {{ session('success') }}
+                </div>
+            @endif
+            @if ($errors->any())
+                <div class="mb-4 rounded-lg border border-red-300 bg-red-50 text-red-800 px-4 py-3">
+                    <ul class="list-disc list-inside">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @yield('content')
+        </main>
     </div>
 </div>
 
