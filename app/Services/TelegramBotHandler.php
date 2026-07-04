@@ -99,22 +99,26 @@ class TelegramBotHandler
     protected function handleContact(string $chatId, array $contact): void
     {
         $phone = ltrim($contact['phone_number'], '+');
+        $telegramFullName = trim(($contact['first_name'] ?? '').' '.($contact['last_name'] ?? ''));
 
         $employee = Employee::where('phone', 'like', "%{$phone}")->first();
 
         if ($employee) {
+            // Rasmiy F.I.Sh (full_name) qo'lda kiritilgan bo'lishi mumkin — uni
+            // Telegramdagi ism bilan avtomatik almashtirmaymiz, faqat solishtirish
+            // uchun telegram_full_name'ni yangilaymiz.
             $employee->update([
                 'telegram_chat_id' => $chatId,
                 'telegram_username' => $contact['username'] ?? null,
+                'telegram_full_name' => $telegramFullName !== '' ? $telegramFullName : null,
             ]);
         } else {
-            $fullName = trim(($contact['first_name'] ?? '').' '.($contact['last_name'] ?? ''));
-
             $employee = Employee::create([
-                'full_name' => $fullName !== '' ? $fullName : 'Nomaʼlum xodim',
+                'full_name' => $telegramFullName !== '' ? $telegramFullName : 'Nomaʼlum xodim',
                 'phone' => $phone,
                 'telegram_chat_id' => $chatId,
                 'telegram_username' => $contact['username'] ?? null,
+                'telegram_full_name' => $telegramFullName !== '' ? $telegramFullName : null,
                 'registered_via' => 'bot',
             ]);
         }

@@ -12,6 +12,7 @@ class Employee extends Model
         'department',
         'telegram_chat_id',
         'telegram_username',
+        'telegram_full_name',
         'registered_via',
         'created_by',
     ];

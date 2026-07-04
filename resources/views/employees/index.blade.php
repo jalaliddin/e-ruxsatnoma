@@ -13,7 +13,8 @@
                 <thead class="bg-gray-50 text-gray-500">
                     <tr>
                         <th class="text-left px-4 py-2">#</th>
-                        <th class="text-left px-4 py-2">F.I.Sh</th>
+                        <th class="text-left px-4 py-2">F.I.Sh (rasmiy)</th>
+                        <th class="text-left px-4 py-2">Telegramdagi ismi</th>
                         <th class="text-left px-4 py-2">Telefon</th>
                         <th class="text-left px-4 py-2">Bo'lim</th>
                         <th class="text-left px-4 py-2">Telegram</th>
@@ -25,6 +26,13 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-2">{{ $employee->id }}</td>
                             <td class="px-4 py-2">{{ $employee->full_name }}</td>
+                            <td class="px-4 py-2">
+                                @if ($employee->telegram_full_name && $employee->telegram_full_name !== $employee->full_name)
+                                    <span class="text-amber-600" title="Rasmiy ism bilan mos emas">{{ $employee->telegram_full_name }}</span>
+                                @else
+                                    {{ $employee->telegram_full_name ?? '—' }}
+                                @endif
+                            </td>
                             <td class="px-4 py-2">{{ $employee->phone }}</td>
                             <td class="px-4 py-2">{{ $employee->department ?? '—' }}</td>
                             <td class="px-4 py-2">
@@ -45,7 +53,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center px-4 py-6 text-gray-500">Xodimlar topilmadi.</td>
+                            <td colspan="7" class="text-center px-4 py-6 text-gray-500">Xodimlar topilmadi.</td>
                         </tr>
                     @endforelse
                 </tbody>
