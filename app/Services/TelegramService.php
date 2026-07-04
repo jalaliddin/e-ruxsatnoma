@@ -132,8 +132,8 @@ class TelegramService
 
     public function sendApprovalToEmployee(Permission $permission): void
     {
-        $from = optional($permission->from_time)->format('d.m.Y H:i');
-        $to = optional($permission->to_time)->format('d.m.Y H:i');
+        $from = $this->formatUzDate($permission->from_time);
+        $to = $this->formatUzDate($permission->to_time);
 
         $text = "✅ Sizning ruxsatnoma so'rovingiz tasdiqlandi!\n\n"
             ."🔑 Kodingiz: <b>{$permission->code}</b>\n"
@@ -152,13 +152,33 @@ class TelegramService
 
     protected function requestSummary(Permission $permission, string $title): string
     {
-        $from = optional($permission->from_time)->format('d.m.Y H:i');
-        $to = optional($permission->to_time)->format('d.m.Y H:i');
+        $from = $this->formatUzDate($permission->from_time);
+        $to = $this->formatUzDate($permission->to_time);
+        $department = $permission->employee?->department?->name ?? $permission->employee?->legacy_department;
 
         return "{$title}\n\n"
             ."👤 Xodim: {$permission->employee?->full_name}\n"
+            ."🏢 Bo'lim: ".($department ?? '—')."\n"
             ."📂 Kategoriya: {$permission->category?->name}\n"
             ."📝 Sabab: {$permission->reason}\n"
             ."🕒 Muddat: {$from} — {$to}";
+    }
+
+    /**
+     * "4-iyul 09:00" ko'rinishidagi o'zbekcha sana formati.
+     */
+    protected function formatUzDate(?\Carbon\Carbon $date): string
+    {
+        if (! $date) {
+            return '—';
+        }
+
+        $months = [
+            1 => 'yanvar', 2 => 'fevral', 3 => 'mart', 4 => 'aprel',
+            5 => 'may', 6 => 'iyun', 7 => 'iyul', 8 => 'avgust',
+            9 => 'sentabr', 10 => 'oktabr', 11 => 'noyabr', 12 => 'dekabr',
+        ];
+
+        return "{$date->day}-{$months[$date->month]} {$date->format('H:i')}";
     }
 }

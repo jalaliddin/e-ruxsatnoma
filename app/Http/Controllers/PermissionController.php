@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
 use App\Models\Permission;
 use App\Models\PermissionCategory;
 use App\Models\User;
@@ -92,6 +93,36 @@ class PermissionController extends Controller
         }
 
         return back()->with('success', 'Qaror qabul qilindi.');
+    }
+
+    public function edit(Permission $permission)
+    {
+        $categories = PermissionCategory::where('is_active', true)->get();
+        $employees = Employee::orderBy('full_name')->get();
+
+        return view('permissions.edit', compact('permission', 'categories', 'employees'));
+    }
+
+    public function update(Request $request, Permission $permission)
+    {
+        $data = $request->validate([
+            'employee_id' => 'nullable|exists:employees,id',
+            'category_id' => 'nullable|exists:permission_categories,id',
+            'reason' => 'nullable|string',
+            'from_time' => 'required|date',
+            'to_time' => 'required|date|after:from_time',
+        ]);
+
+        $permission->update($data);
+
+        return redirect()->route('permission.show', $permission)->with('success', 'So\'rov yangilandi.');
+    }
+
+    public function destroy(Permission $permission)
+    {
+        $permission->delete();
+
+        return redirect()->route('permission.index')->with('success', 'So\'rov o\'chirildi.');
     }
 
     public function create()

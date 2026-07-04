@@ -6,7 +6,19 @@
     <div class="max-w-2xl bg-white rounded-xl shadow-sm p-6 space-y-4">
         <div class="flex items-center justify-between">
             <h2 class="text-lg font-semibold">So'rov #{{ $permission->id }}</h2>
-            @include('partials.status-badge', ['status' => $permission->status])
+            <div class="flex items-center gap-3">
+                @include('partials.status-badge', ['status' => $permission->status])
+                @auth
+                    @if (auth()->user()->isAdmin() || auth()->user()->isHr())
+                        <a href="{{ route('permission.edit', $permission) }}" class="text-blue-600 hover:underline text-sm">Tahrirlash</a>
+                        <form method="POST" action="{{ route('permission.destroy', $permission) }}" onsubmit="return confirm('Ishonchingiz komilmi?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-red-600 hover:underline text-sm">O'chirish</button>
+                        </form>
+                    @endif
+                @endauth
+            </div>
         </div>
 
         <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">

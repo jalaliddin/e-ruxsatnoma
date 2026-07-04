@@ -15,6 +15,10 @@
 
 <div>
     <label class="block text-gray-700 mb-1">Bo'lim</label>
-    <input type="text" name="department" value="{{ old('department', $employee->department ?? '') }}"
-           class="w-full border px-3 py-2 rounded-lg">
+    <select name="department_id" class="w-full border px-3 py-2 rounded-lg">
+        <option value="">— Tanlanmagan —</option>
+        @foreach ($departments as $dept)
+            <option value="{{ $dept->id }}" @selected(old('department_id', $employee->department_id ?? null) == $dept->id)>{{ $dept->name }}</option>
+        @endforeach
+    </select>
 </div>

@@ -9,7 +9,8 @@ class Employee extends Model
     protected $fillable = [
         'full_name',
         'phone',
-        'department',
+        'legacy_department',
+        'department_id',
         'telegram_chat_id',
         'telegram_username',
         'telegram_full_name',
@@ -20,6 +21,11 @@ class Employee extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
     }
 
     public function permissions()

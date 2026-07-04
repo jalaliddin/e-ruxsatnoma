@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PermissionCategoryController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\Admin\UserController;
 
@@ -27,6 +28,9 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:admin,hr')->group(function () {
         Route::post('/ruxsatnomalar/{permission}/assign', [PermissionController::class, 'assignManager'])->name('permission.assign');
+        Route::get('/ruxsatnomalar/{permission}/edit', [PermissionController::class, 'edit'])->name('permission.edit');
+        Route::put('/ruxsatnomalar/{permission}', [PermissionController::class, 'update'])->name('permission.update');
+        Route::delete('/ruxsatnomalar/{permission}', [PermissionController::class, 'destroy'])->name('permission.destroy');
         Route::resource('xodimlar', EmployeeController::class)->names('employees')->parameters(['xodimlar' => 'employee'])->except(['show']);
     });
 
@@ -36,6 +40,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:admin')->group(function () {
         Route::resource('kategoriyalar', PermissionCategoryController::class)->names('categories')->parameters(['kategoriyalar' => 'category'])->except(['show']);
+        Route::resource('bolimlar', DepartmentController::class)->names('departments')->parameters(['bolimlar' => 'department'])->except(['show']);
         Route::resource('admin/foydalanuvchilar', UserController::class)->names('admin.users')->parameters(['foydalanuvchilar' => 'user'])->except(['show']);
         Route::post('/admin/foydalanuvchilar/{user}/telegram-link', [UserController::class, 'generateTelegramLink'])->name('admin.users.telegram-link');
     });

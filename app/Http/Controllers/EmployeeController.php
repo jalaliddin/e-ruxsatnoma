@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 
@@ -9,14 +10,16 @@ class EmployeeController extends Controller
 {
     public function index()
     {
-        $employees = Employee::latest()->paginate(25);
+        $employees = Employee::with('department')->latest()->paginate(25);
 
         return view('employees.index', compact('employees'));
     }
 
     public function create()
     {
-        return view('employees.create');
+        $departments = Department::where('is_active', true)->orderBy('name')->get();
+
+        return view('employees.create', compact('departments'));
     }
 
     public function store(Request $request)
@@ -24,7 +27,7 @@ class EmployeeController extends Controller
         $data = $request->validate([
             'full_name' => 'required|string|max:255',
             'phone' => 'required|string|max:32|unique:employees,phone',
-            'department' => 'nullable|string|max:255',
+            'department_id' => 'nullable|exists:departments,id',
         ]);
 
         Employee::create($data + ['created_by' => $request->user()->id]);
@@ -34,7 +37,9 @@ class EmployeeController extends Controller
 
     public function edit(Employee $employee)
     {
-        return view('employees.edit', compact('employee'));
+        $departments = Department::where('is_active', true)->orderBy('name')->get();
+
+        return view('employees.edit', compact('employee', 'departments'));
     }
 
     public function update(Request $request, Employee $employee)
@@ -42,7 +47,7 @@ class EmployeeController extends Controller
         $data = $request->validate([
             'full_name' => 'required|string|max:255',
             'phone' => 'required|string|max:32|unique:employees,phone,'.$employee->id,
-            'department' => 'nullable|string|max:255',
+            'department_id' => 'nullable|exists:departments,id',
         ]);
 
         $employee->update($data);

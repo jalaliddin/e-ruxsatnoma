@@ -46,6 +46,10 @@
                        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('categories.*') ? 'bg-gray-800 text-white' : 'text-gray-300' }}">
                         🗂️ Kategoriyalar
                     </a>
+                    <a href="{{ route('departments.index') }}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('departments.*') ? 'bg-gray-800 text-white' : 'text-gray-300' }}">
+                        🏢 Bo'limlar
+                    </a>
                     <a href="{{ route('admin.users.index') }}"
                        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('admin.users.*') ? 'bg-gray-800 text-white' : 'text-gray-300' }}">
                         🧑‍💼 Foydalanuvchilar

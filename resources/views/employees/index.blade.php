@@ -34,7 +34,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-2">{{ $employee->phone }}</td>
-                            <td class="px-4 py-2">{{ $employee->department ?? '—' }}</td>
+                            <td class="px-4 py-2">{{ $employee->department->name ?? $employee->legacy_department ?? '—' }}</td>
                             <td class="px-4 py-2">
                                 @if ($employee->telegram_chat_id)
                                     <span class="text-green-600">✅ ulangan</span>
