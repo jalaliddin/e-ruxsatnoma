@@ -6,6 +6,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PermissionCategoryController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\DoorAccessController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\Admin\UserController;
 
@@ -13,6 +14,10 @@ Auth::routes(['register' => false]);
 
 Route::get('/ruxsatnomalar/webhook', [PermissionController::class, 'webhook'])->name('permission.webhook');
 Route::post('/telegram/webhook', [TelegramWebhookController::class, 'handle'])->name('telegram.webhook');
+
+// Xodim Telegramdagi tasdiqlash xabaridagi havola orqali (loginsiz) ochadi.
+Route::get('/eshik/{code}', [DoorAccessController::class, 'show'])->name('door.show');
+Route::post('/eshik/{code}', [DoorAccessController::class, 'open'])->name('door.open');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', function () {

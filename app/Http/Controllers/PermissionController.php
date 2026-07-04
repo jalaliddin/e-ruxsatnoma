@@ -7,7 +7,7 @@ use App\Models\Permission;
 use App\Models\PermissionCategory;
 use App\Models\User;
 use App\Services\TelegramService;
-use GuzzleHttp\Client;
+use App\Services\TurnstileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -182,19 +182,7 @@ class PermissionController extends Controller
 
     public function openDoor($device)
     {
-        $client = new Client([
-            'base_uri' => 'http://10.100.90.5'.$device,
-            'auth' => ['admin', '01x994ma', 'digest'],  // digest auth uchun
-        ]);
-
-        $response = $client->request('GET', '/cgi-bin/accessControl.cgi', [
-            'query' => [
-                'action' => 'openDoor',
-                'channel' => 1,
-            ],
-        ]);
-
-        $body = $response->getBody()->getContents();
+        $body = app(TurnstileService::class)->open($device);
 
         return response()->json([
             'response' => $body,

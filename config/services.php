@@ -41,4 +41,9 @@ return [
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
     ],
 
+    'turnstile' => [
+        'entry_device' => env('TURNSTILE_ENTRY_DEVICE', '1'),
+        'exit_device' => env('TURNSTILE_EXIT_DEVICE', '2'),
+    ],
+
 ];

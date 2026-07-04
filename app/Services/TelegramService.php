@@ -134,10 +134,12 @@ class TelegramService
     {
         $from = $this->formatUzDate($permission->from_time);
         $to = $this->formatUzDate($permission->to_time);
+        $doorUrl = url("/eshik/{$permission->code}");
 
         $text = "✅ Sizning ruxsatnoma so'rovingiz tasdiqlandi!\n\n"
             ."🔑 Kodingiz: <b>{$permission->code}</b>\n"
-            ."🕒 Amal qilish muddati: {$from} — {$to}";
+            ."🕒 Amal qilish muddati: {$from} — {$to}\n\n"
+            .'<a href="'.$doorUrl.'">🔓 Turniketni ochish</a>';
 
         $this->sendMessage($permission->employee->telegram_chat_id, $text);
     }
