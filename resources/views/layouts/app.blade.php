@@ -33,6 +33,11 @@
             </a>
 
             @auth
+                <a href="{{ route('reports.index') }}"
+                   class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('reports.*') ? 'bg-gray-800 text-white' : 'text-gray-300' }}">
+                    📊 Hisobotlar
+                </a>
+
                 @if (auth()->user()->isAdmin() || auth()->user()->isHr())
                     <div class="pt-4 mt-4 border-t border-gray-800 text-xs uppercase text-gray-500 px-3">Boshqaruv</div>
                     <a href="{{ route('employees.index') }}"

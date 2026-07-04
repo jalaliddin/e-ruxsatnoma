@@ -5,6 +5,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PermissionCategoryController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\Admin\UserController;
 
@@ -25,6 +26,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/tekshir', [PermissionController::class, 'check'])->name('permission.check');
     Route::get('/ruxsatnomalar', [PermissionController::class, 'index'])->name('permission.index');
     Route::get('/ruxsatnomalar/{permission}', [PermissionController::class, 'show'])->name('permission.show');
+
+    Route::middleware('role:admin,hr,manager')->group(function () {
+        Route::get('/hisobotlar', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/hisobotlar/export', [ReportController::class, 'export'])->name('reports.export');
+    });
 
     Route::middleware('role:admin,hr')->group(function () {
         Route::post('/ruxsatnomalar/{permission}/assign', [PermissionController::class, 'assignManager'])->name('permission.assign');
