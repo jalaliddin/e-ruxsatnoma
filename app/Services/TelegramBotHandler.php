@@ -258,14 +258,14 @@ class TelegramBotHandler
     }
 
     /**
-     * Faqat ish vaqti (09:00–18:00) tanlanadi.
+     * Faqat ish vaqti (09:00–20:00) tanlanadi.
      */
     protected function hourKeyboard(string $ctx, int $y, int $m, int $d): array
     {
         $rows = [];
         $row = [];
 
-        for ($h = 9; $h <= 18; $h++) {
+        for ($h = 9; $h <= 20; $h++) {
             $row[] = ['text' => sprintf('%02d', $h), 'callback_data' => "hour:{$ctx}:{$y}:{$m}:{$d}:{$h}"];
 
             if (count($row) === 5) {

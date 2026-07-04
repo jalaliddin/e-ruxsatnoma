@@ -44,6 +44,9 @@ return [
     'turnstile' => [
         'entry_device' => env('TURNSTILE_ENTRY_DEVICE', '1'),
         'exit_device' => env('TURNSTILE_EXIT_DEVICE', '2'),
+        // Xodimlar korxona ichki tarmog'ida bo'lgani uchun, botdagi eshik
+        // havolasi APP_URL'dan emas, shu (lokal) manzildan tuziladi.
+        'door_base_url' => env('TURNSTILE_DOOR_BASE_URL', 'http://10.100.90.14:5050'),
     ],
 
 ];

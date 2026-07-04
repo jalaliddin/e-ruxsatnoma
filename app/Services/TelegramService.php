@@ -134,14 +134,19 @@ class TelegramService
     {
         $from = $this->formatUzDate($permission->from_time);
         $to = $this->formatUzDate($permission->to_time);
-        $doorUrl = url("/eshik/{$permission->code}");
+        $doorUrl = rtrim(config('services.turnstile.door_base_url'), '/')."/eshik/{$permission->code}";
 
         $text = "✅ Sizning ruxsatnoma so'rovingiz tasdiqlandi!\n\n"
             ."🔑 Kodingiz: <b>{$permission->code}</b>\n"
-            ."🕒 Amal qilish muddati: {$from} — {$to}\n\n"
-            .'<a href="'.$doorUrl.'">🔓 Turniketni ochish</a>';
+            ."🕒 Amal qilish muddati: {$from} — {$to}";
 
-        $this->sendMessage($permission->employee->telegram_chat_id, $text);
+        $this->sendMessage(
+            $permission->employee->telegram_chat_id,
+            $text,
+            $this->inlineKeyboard([[
+                ['text' => '🔓 Turniketni ochish', 'url' => $doorUrl],
+            ]])
+        );
     }
 
     public function sendRejectionToEmployee(Permission $permission): void
