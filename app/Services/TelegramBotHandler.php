@@ -490,11 +490,18 @@ class TelegramBotHandler
             'status' => 'awaiting_manager',
         ]);
 
-        $this->telegram->answerCallbackQuery($callbackId, "{$manager->name} ga yuborildi.");
         $this->telegram->editMessageReplyMarkup($chatId, $messageId, ['inline_keyboard' => []]);
 
         if ($manager->telegram_chat_id) {
+            $this->telegram->answerCallbackQuery($callbackId, "{$manager->name} ga yuborildi.");
             $this->telegram->sendManagerDecisionRequest($permission, $manager);
+        } else {
+            $this->telegram->answerCallbackQuery($callbackId, "{$manager->name} hali botga ulanmagan!");
+            $this->telegram->sendMessage(
+                $chatId,
+                "⚠️ {$manager->name} hali Telegram botga ulanmagan, shuning uchun unga xabar yubora olmadim. "
+                ."Admin paneldan (Foydalanuvchilar) unga bog'lash havolasini yarating, so'ngra so'rov #{$permission->id}ni web-panel orqali unga qayta tayinlang."
+            );
         }
     }
 

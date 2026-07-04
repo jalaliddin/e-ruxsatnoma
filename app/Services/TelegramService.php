@@ -101,12 +101,15 @@ class TelegramService
     public function notifyHrNewRequest(Permission $permission): void
     {
         $hrUsers = User::where('role', 'hr')->whereNotNull('telegram_chat_id')->get();
-        $managers = User::where('role', 'manager')->whereNotNull('telegram_chat_id')->get();
+        // Botni hali bog'lamagan rahbarlar ham tanlov tugmasida ko'rinishi kerak —
+        // ular faqat keyinroq (bog'langach) xabar oladi, hozircha ro'yxatdan
+        // chiqarib tashlamaymiz.
+        $managers = User::where('role', 'manager')->get();
 
         $text = $this->requestSummary($permission, "🆕 <b>Yangi ruxsatnoma so'rovi</b>");
 
         $buttons = $managers->map(fn (User $m) => [[
-            'text' => $m->name,
+            'text' => $m->telegram_chat_id ? $m->name : "{$m->name} (bog'lanmagan)",
             'callback_data' => "assign:{$permission->id}:{$m->id}",
         ]])->values()->all();
 
