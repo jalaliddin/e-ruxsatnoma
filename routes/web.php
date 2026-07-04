@@ -27,7 +27,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:admin,hr')->group(function () {
         Route::post('/ruxsatnomalar/{permission}/assign', [PermissionController::class, 'assignManager'])->name('permission.assign');
-        Route::resource('xodimlar', EmployeeController::class)->names('employees')->except(['show']);
+        Route::resource('xodimlar', EmployeeController::class)->names('employees')->parameters(['xodimlar' => 'employee'])->except(['show']);
     });
 
     Route::middleware('role:manager,admin')->group(function () {
@@ -35,8 +35,8 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('role:admin')->group(function () {
-        Route::resource('kategoriyalar', PermissionCategoryController::class)->names('categories')->except(['show']);
-        Route::resource('admin/foydalanuvchilar', UserController::class)->names('admin.users')->except(['show']);
+        Route::resource('kategoriyalar', PermissionCategoryController::class)->names('categories')->parameters(['kategoriyalar' => 'category'])->except(['show']);
+        Route::resource('admin/foydalanuvchilar', UserController::class)->names('admin.users')->parameters(['foydalanuvchilar' => 'user'])->except(['show']);
         Route::post('/admin/foydalanuvchilar/{user}/telegram-link', [UserController::class, 'generateTelegramLink'])->name('admin.users.telegram-link');
     });
 });

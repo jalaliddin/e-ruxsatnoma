@@ -50,8 +50,10 @@ class TelegramBotHandler
 
         match ($state->state) {
             'awaiting_reason' => $this->handleReason($state, $text),
-            'awaiting_from' => $this->handleFromTime($state, $text),
-            'awaiting_to' => $this->handleToTime($state, $text),
+            'awaiting_from', 'awaiting_to' => $this->telegram->sendMessage(
+                $chatId,
+                "Iltimos, sana va vaqtni yuqoridagi tugmalar orqali tanlang."
+            ),
             default => $this->handleMenu($chatId, $text),
         };
     }
@@ -217,59 +219,178 @@ class TelegramBotHandler
 
         $state->update(['state' => 'awaiting_from', 'payload' => $payload]);
 
+        $today = Carbon::today();
         $this->telegram->sendMessage(
             $state->telegram_chat_id,
-            "Ruxsat qachondan boshlanadi? Sanani shu formatda yuboring:\nmisol: 04.07.2026 09:00"
+            "Ruxsat qachondan boshlanadi? Sanani tanlang:",
+            $this->telegram->inlineKeyboard($this->calendarKeyboard($today->year, $today->month, 'from'))
         );
     }
 
-    protected function handleFromTime(BotState $state, string $text): void
+    protected function calendarKeyboard(int $year, int $month, string $ctx): array
     {
-        $from = $this->parseDateTime($text);
+        $first = Carbon::create($year, $month, 1);
+        $daysInMonth = $first->daysInMonth;
+        $startWeekday = $first->dayOfWeekIso; // 1 (Dush) .. 7 (Yak)
+        $today = Carbon::today();
 
-        if (! $from) {
+        $rows = [];
+        $rows[] = collect(['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'])
+            ->map(fn ($d) => ['text' => $d, 'callback_data' => 'noop'])->all();
+
+        $week = [];
+        for ($i = 1; $i < $startWeekday; $i++) {
+            $week[] = ['text' => ' ', 'callback_data' => 'noop'];
+        }
+
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $date = Carbon::create($year, $month, $day);
+
+            if ($date->lt($today)) {
+                $week[] = ['text' => '·', 'callback_data' => 'noop'];
+            } else {
+                $label = $date->isToday() ? "[{$day}]" : (string) $day;
+                $week[] = ['text' => $label, 'callback_data' => "cal:{$ctx}:{$year}:{$month}:{$day}"];
+            }
+
+            if (count($week) === 7) {
+                $rows[] = $week;
+                $week = [];
+            }
+        }
+
+        if ($week) {
+            while (count($week) < 7) {
+                $week[] = ['text' => ' ', 'callback_data' => 'noop'];
+            }
+            $rows[] = $week;
+        }
+
+        $prev = $first->copy()->subMonth();
+        $next = $first->copy()->addMonth();
+
+        $navRow = [];
+        $navRow[] = $prev->copy()->endOfMonth()->lt($today)
+            ? ['text' => ' ', 'callback_data' => 'noop']
+            : ['text' => '‹', 'callback_data' => "calnav:{$ctx}:{$prev->year}:{$prev->month}"];
+        $navRow[] = ['text' => $first->format('m.Y'), 'callback_data' => 'noop'];
+        $navRow[] = ['text' => '›', 'callback_data' => "calnav:{$ctx}:{$next->year}:{$next->month}"];
+        $rows[] = $navRow;
+
+        return $rows;
+    }
+
+    protected function hourKeyboard(string $ctx, int $y, int $m, int $d): array
+    {
+        $rows = [];
+        $row = [];
+
+        for ($h = 0; $h < 24; $h++) {
+            $row[] = ['text' => sprintf('%02d', $h), 'callback_data' => "hour:{$ctx}:{$y}:{$m}:{$d}:{$h}"];
+
+            if (count($row) === 6) {
+                $rows[] = $row;
+                $row = [];
+            }
+        }
+
+        if ($row) {
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    protected function minuteKeyboard(string $ctx, int $y, int $m, int $d, int $h): array
+    {
+        $row = array_map(
+            fn (int $mi) => ['text' => sprintf('%02d', $mi), 'callback_data' => "min:{$ctx}:{$y}:{$m}:{$d}:{$h}:{$mi}"],
+            [0, 15, 30, 45]
+        );
+
+        return [$row];
+    }
+
+    protected function onCalendarNav(string $chatId, string $rest, string $callbackId): void
+    {
+        [$ctx, $y, $m] = array_pad(explode(':', $rest, 3), 3, null);
+
+        $this->telegram->answerCallbackQuery($callbackId);
+        $this->telegram->sendMessage(
+            $chatId,
+            $ctx === 'from' ? "Ruxsat qachondan boshlanadi? Sanani tanlang:" : "Ruxsat qachongacha? Sanani tanlang:",
+            $this->telegram->inlineKeyboard($this->calendarKeyboard((int) $y, (int) $m, $ctx))
+        );
+    }
+
+    protected function onCalendarDay(string $chatId, string $rest, string $callbackId): void
+    {
+        [$ctx, $y, $m, $d] = array_pad(explode(':', $rest, 4), 4, null);
+
+        $this->telegram->answerCallbackQuery($callbackId);
+        $this->telegram->sendMessage(
+            $chatId,
+            "Soatni tanlang:",
+            $this->telegram->inlineKeyboard($this->hourKeyboard($ctx, (int) $y, (int) $m, (int) $d))
+        );
+    }
+
+    protected function onHourSelected(string $chatId, string $rest, string $callbackId): void
+    {
+        [$ctx, $y, $m, $d, $h] = array_pad(explode(':', $rest, 5), 5, null);
+
+        $this->telegram->answerCallbackQuery($callbackId);
+        $this->telegram->sendMessage(
+            $chatId,
+            "Daqiqani tanlang:",
+            $this->telegram->inlineKeyboard($this->minuteKeyboard($ctx, (int) $y, (int) $m, (int) $d, (int) $h))
+        );
+    }
+
+    protected function onMinuteSelected(string $chatId, string $rest, string $callbackId): void
+    {
+        [$ctx, $y, $m, $d, $h, $mi] = array_pad(explode(':', $rest, 6), 6, null);
+
+        $selected = Carbon::create((int) $y, (int) $m, (int) $d, (int) $h, (int) $mi);
+        $state = BotState::firstOrCreate(['telegram_chat_id' => $chatId], ['state' => 'idle']);
+        $payload = $state->payload ?? [];
+
+        if ($ctx === 'from') {
+            $payload['from_time'] = $selected->toDateTimeString();
+            $state->update(['state' => 'awaiting_to', 'payload' => $payload]);
+
+            $this->telegram->answerCallbackQuery($callbackId, "Boshlanish: {$selected->format('d.m.Y H:i')}");
             $this->telegram->sendMessage(
-                $state->telegram_chat_id,
-                "Format noto'g'ri. Iltimos, shu ko'rinishda yuboring: 04.07.2026 09:00"
+                $chatId,
+                "Ruxsat qachongacha? Sanani tanlang:",
+                $this->telegram->inlineKeyboard($this->calendarKeyboard($selected->year, $selected->month, 'to'))
             );
 
             return;
         }
 
-        $payload = $state->payload ?? [];
-        $payload['from_time'] = $from->toDateTimeString();
+        $from = Carbon::parse($payload['from_time'] ?? null);
 
-        $state->update(['state' => 'awaiting_to', 'payload' => $payload]);
-
-        $this->telegram->sendMessage(
-            $state->telegram_chat_id,
-            "Ruxsat qachongacha? Sanani shu formatda yuboring:\nmisol: 04.07.2026 18:00"
-        );
-    }
-
-    protected function handleToTime(BotState $state, string $text): void
-    {
-        $to = $this->parseDateTime($text);
-        $payload = $state->payload ?? [];
-        $from = Carbon::parse($payload['from_time']);
-
-        if (! $to || $to->lessThanOrEqualTo($from)) {
+        if (! isset($payload['from_time']) || $selected->lessThanOrEqualTo($from)) {
+            $this->telegram->answerCallbackQuery($callbackId, "❌ Tugash vaqti boshlanish vaqtidan keyin bo'lishi kerak.");
             $this->telegram->sendMessage(
-                $state->telegram_chat_id,
-                "Format noto'g'ri yoki tugash vaqti boshlanish vaqtidan oldin. Qaytadan yuboring: 04.07.2026 18:00"
+                $chatId,
+                "Ruxsat qachongacha? Sanani qaytadan tanlang:",
+                $this->telegram->inlineKeyboard($this->calendarKeyboard($from->year, $from->month, 'to'))
             );
 
             return;
         }
 
-        $payload['to_time'] = $to->toDateTimeString();
+        $payload['to_time'] = $selected->toDateTimeString();
         $state->update(['state' => 'awaiting_confirm', 'payload' => $payload]);
 
         $category = PermissionCategory::find($payload['category_id']);
 
+        $this->telegram->answerCallbackQuery($callbackId, "Tugash: {$selected->format('d.m.Y H:i')}");
         $this->telegram->sendMessage(
-            $state->telegram_chat_id,
-            "Tekshiring:\n\n📂 Kategoriya: {$category?->name}\n📝 Sabab: {$payload['reason']}\n🕒 {$from->format('d.m.Y H:i')} — {$to->format('d.m.Y H:i')}",
+            $chatId,
+            "Tekshiring:\n\n📂 Kategoriya: {$category?->name}\n📝 Sabab: {$payload['reason']}\n🕒 {$from->format('d.m.Y H:i')} — {$selected->format('d.m.Y H:i')}",
             $this->telegram->inlineKeyboard([[
                 ['text' => '✅ Yuborish', 'callback_data' => 'confirm:send'],
                 ['text' => '❌ Bekor qilish', 'callback_data' => 'confirm:cancel'],
@@ -288,6 +409,10 @@ class TelegramBotHandler
 
         match ($action) {
             'category' => $this->onCategorySelected($chatId, (int) $rest, $callbackId),
+            'calnav' => $this->onCalendarNav($chatId, $rest, $callbackId),
+            'cal' => $this->onCalendarDay($chatId, $rest, $callbackId),
+            'hour' => $this->onHourSelected($chatId, $rest, $callbackId),
+            'min' => $this->onMinuteSelected($chatId, $rest, $callbackId),
             'confirm' => $this->onConfirm($chatId, $rest, $messageId, $callbackId),
             'assign' => $this->onAssign($chatId, $rest, $messageId, $callbackId),
             'decide' => $this->onDecide($chatId, $rest, $messageId, $callbackId),
@@ -411,15 +536,6 @@ class TelegramBotHandler
         }
 
         $this->telegram->editMessageReplyMarkup($chatId, $messageId, ['inline_keyboard' => []]);
-    }
-
-    protected function parseDateTime(string $text): ?Carbon
-    {
-        try {
-            return Carbon::createFromFormat('d.m.Y H:i', trim($text));
-        } catch (\Throwable) {
-            return null;
-        }
     }
 
     protected function generateCode(): string
